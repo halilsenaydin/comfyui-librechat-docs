@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComfyUI & LibreChat Integration Guide</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-tertiary: #1a1a2e;
+    --bg-card: #16162a;
+    --accent: #7c3aed;
+    --accent-light: #a78bfa;
+    --accent-glow: rgba(124, 58, 237, 0.3);
+    --green: #10b981;
+    --green-glow: rgba(16, 185, 129, 0.3);
+    --cyan: #06b6d4;
+    --cyan-glow: rgba(6, 182, 212, 0.25);
+    --yellow: #f59e0b;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #1e293b;
+    --border-light: #334155;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sidebar-logo .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .sidebar-logo h2 {
+    font-size: 16px;
+    background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+  }
+
+  .sidebar-logo small {
+    display: block; font-size: 11px; color: var(--text-muted);
+    -webkit-text-fill-color: var(--text-muted);
+  }
+
+  .nav-section {
+    padding: 8px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-weight: 600;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 24px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13.5px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: rgba(124, 58, 237, 0.08);
+  }
+
+  .nav-link.active {
+    color: var(--accent-light);
+    border-left-color: var(--accent);
+    background: rgba(124, 58, 237, 0.12);
+    font-weight: 600;
+  }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  .nav-link.active .nav-icon, .nav-link:hover .nav-icon { opacity: 1; }
+
+  /* === MAIN CONTENT === */
+  .main {
+    margin-left: 280px;
+    min-height: 100vh;
+  }
+
+  /* === HERO === */
+  .hero {
+    padding: 60px 48px 48px;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(124,58,237,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 0%, rgba(6,182,212,0.1) 0%, transparent 50%),
+      var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    background: rgba(124, 58, 237, 0.15);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--accent-light);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero h1 .gradient-text {
+    background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero .subtitle {
+    font-size: 17px;
+    color: var(--text-secondary);
+    max-width: 640px;
+    line-height: 1.7;
+  }
+
+  .hero .compat {
+    margin-top: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .hero .compat span {
+    padding: 5px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* === CONTENT SECTIONS === */
+  .content {
+    max-width: 900px;
+    padding: 48px;
+  }
+
+  .section {
+    margin-bottom: 56px;
+    scroll-margin-top: 32px;
+  }
+
+  .section h2 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section h2 .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .section .lead {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 15px;
+  }
+
+  .section h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--text-primary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section p {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+    font-size: 14.5px;
+  }
+
+  .section ul, .section ol {
+    margin: 12px 0 16px 20px;
+    color: var(--text-secondary);
+    font-size: 14.5px;
+  }
+
+  .section li { margin-bottom: 6px; }
+
+  .section a {
+    color: var(--accent-light);
+    text-decoration: none;
+  }
+
+  .section a:hover { text-decoration: underline; }
+
+  /* === CODE BLOCK === */
+  .code-block {
+    position: relative;
+    margin: 16px 0 24px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #1e1e2e;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .code-header .filename {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .code-header .dots {
+    display: flex; gap: 6px;
+  }
+
+  .code-header .dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .code-header .dots span:nth-child(1) { background: #ff5f56; }
+  .code-header .dots span:nth-child(2) { background: #ffbd2e; }
+  .code-header .dots span:nth-child(3) { background: #27c93f; }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+  }
+
+  .copy-btn.copied {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .code-block pre {
+    margin: 0 !important;
+    padding: 16px !important;
+    background: transparent !important;
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+    max-height: 420px;
+    overflow: auto;
+  }
+
+  .code-block code {
+    font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace !important;
+    font-size: 13px !important;
+  }
+
+  /* Inline code */
+  .section code:not(pre code) {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    color: var(--accent-light);
+  }
+
+  /* === ARCHITECTURE DIAGRAM === */
+  .arch-diagram {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arch-diagram::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+  }
+
+  .arch-tier {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    position: relative;
+  }
+
+  .arch-node {
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 160px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .arch-node.docker {
+    background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(6,182,212,0.05));
+    border: 1px solid rgba(6,182,212,0.3);
+    color: var(--cyan);
+  }
+
+  .arch-node.api {
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05));
+    border: 1px solid rgba(124,58,237,0.3);
+    color: var(--accent-light);
+  }
+
+  .arch-node.gpu {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--yellow);
+  }
+
+  .arch-node .node-icon {
+    font-size: 18px;
+  }
+
+  .arch-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    color: var(--text-muted);
+    font-size: 18px;
+  }
+
+  .arch-arrow span {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+  }
+
+  /* === FOLDER TREE === */
+  .folder-tree {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 2;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+  }
+
+  .folder-tree .folder { color: var(--cyan); font-weight: 600; }
+  .folder-tree .file { color: var(--green); }
+  .folder-tree .comment { color: var(--text-muted); font-style: italic; }
+  .folder-tree .line { display: block; }
+  .folder-tree a {
+    color: var(--accent-light);
+    text-decoration: none;
+  }
+
+  /* === INFO BOX === */
+  .info-box {
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin: 16px 0 24px;
+    font-size: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .info-box.tip {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.25);
+    color: #6ee7b7;
+  }
+
+  .info-box.warning {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    color: #fcd34d;
+  }
+
+  .info-box .icon {
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* === TABLE === */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0 24px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  td code {
+    background: var(--bg-tertiary);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    color: var(--accent-light);
+  }
+
+  a.url-link {
+    color: var(--cyan);
+    text-decoration: none;
+    font-size: 12.5px;
+    word-break: break-all;
+  }
+
+  a.url-link:hover { text-decoration: underline; }
+
+  /* === MOBILE TOGGLE === */
+  .mobile-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+
+  /* === SCROLL BAR === */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .hero { padding: 40px 24px 32px; }
+    .hero h1 { font-size: 30px; }
+    .content { padding: 32px 20px; }
+    .mobile-toggle { display: flex; align-items: center; justify-content: center; }
+  }
+
+  /* === FOOTER === */
+  .footer {
+    margin-left: 280px;
+    padding: 32px 48px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 900px) { .footer { margin-left: 0; } }
+
+  /* === TERMINAL OUTPUT === */
+  .terminal-output {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0 20px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 13px;
+    color: var(--green);
+  }
+
+  .terminal-output .prompt {
+    color: var(--accent-light);
+  }
+
+  .terminal-output .result {
+    color: #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎨</div>
+    <div>
+      <h2>AI Image Guide</h2>
+      <small>ComfyUI + LibreChat</small>
+    </div>
+  </div>
+
+  <div class="nav-section">Overview</div>
+  <a href="#architecture" class="nav-link active" data-section="architecture">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Architecture
+  </a>
+
+  <div class="nav-section">Setup</div>
+  <a href="#install" class="nav-link" data-section="install">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16"/></svg>
+    Install ComfyUI
+  </a>
+  <a href="#models" class="nav-link" data-section="models">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+    Flux Models
+  </a>
+  <a href="#workflow" class="nav-link" data-section="workflow">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    JSON Workflow
+  </a>
+
+  <div class="nav-section">Integration</div>
+  <a href="#proxy" class="nav-link" data-section="proxy">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Flask Proxy App
+  </a>
+  <a href="#dockerfile" class="nav-link" data-section="dockerfile">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m4 0h4"/></svg>
+    Dockerfile
+  </a>
+  <a href="#compose" class="nav-link" data-section="compose">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    Docker Compose
+  </a>
+  <a href="#env" class="nav-link" data-section="env">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    .env Config
+  </a>
+  <a href="#restart" class="nav-link" data-section="restart">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+    Restart & Test
+  </a>
+  <a href="#bat" class="nav-link" data-section="bat">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    Batch Launcher
+  </a>
+</nav>
+
+<!-- MOBILE TOGGLE -->
+<button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation">☰</button>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-badge">📖 Complete Guide &middot; 2025</div>
+    <h1>Integrate <span class="gradient-text">ComfyUI + Flux</span> with LibreChat</h1>
+    <p class="subtitle">
+      A step-by-step guide to running ComfyUI with the FLUX.1-dev model and exposing it as a Stable Diffusion
+      compatible API through a Flask proxy, so LibreChat can generate images right from the chat.
+    </p>
+    <div class="compat">
+      <span>🐋 Docker</span>
+      <span>🟩 CUDA 12.x</span>
+      <span>🐍 Python 3.11</span>
+      <span>🌐 Flask Proxy</span>
+      <span>🔥 FLUX.1-dev</span>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- SECTION 0: ARCHITECTURE -->
+    <section class="section" id="architecture">
+      <h2><span class="step-badge">◇</span> System Architecture</h2>
+      <p class="lead">Understanding the request flow from LibreChat to ComfyUI's GPU.</p>
+
+      <div class="arch-diagram">
+        <div class="arch-tier">
+          <div class="arch-node docker">
+            <span class="node-icon">🐋</span> LibreChat (Docker)
+          </div>
+        </div>
+        <div class="arch-arrow">↓ <span>SD API calls</span> ↓</div>
+        <div class="arch-tier">
+          <div class="arch-node api">
+            <span class="node-icon">🔀</span> Flask Proxy (port 7860)
+          </div>
+        </div>
+        <div class="arch-arrow">↓ <span>ComfyUI API</span> ↓</div>
+        <div class="arch-tier">
+          <div class="arch-node gpu">
+            <span class="node-icon">🎨</span> ComfyUI (port 8188)
+          </div>
+        </div>
+        <div class="arch-arrow">↓ <span>Inference</span> ↓</div>
+        <div class="arch-tier">
+          <div class="arch-node gpu">
+            <span class="node-icon">⚡</span> FLUX.1-dev &middot; RTX GPU
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div>The Flask proxy translates LibreChat's Stable Diffusion (A1111) API calls into ComfyUI's workflow-based API, bridging two different ecosystems seamlessly.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: INSTALL COMFYUI -->
+    <section class="section" id="install">
+      <h2><span class="step-badge">1</span> Install ComfyUI</h2>
+      <p class="lead">Clone the repository, create a virtual environment, and install PyTorch with CUDA support.</p>
+
+      <h3>Clone &amp; Activate Virtual Environment</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 Terminal — Setup</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash"># Clone repo
+git clone https://github.com/comfyanonymous/ComfyUI
+cd ComfyUI
+
+# Create venv with Python 3.11
+py -3.11 -m venv venv
+venv\Scripts\activate</code></pre>
+      </div>
+
+      <h3>Install PyTorch with CUDA</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 Terminal — CUDA Install</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash"># Install latest CUDA-enabled PyTorch
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128</code></pre>
+      </div>
+
+      <h3>Verify CUDA</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 Terminal — CUDA Test</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0))"</code></pre>
+      </div>
+
+      <div class="terminal-output">
+        <span class="prompt">Expected output:</span><br>
+        <span class="result">True</span><br>
+        <span class="result">NVIDIA GeForce RTX 5090</span>
+      </div>
+
+      <div class="info-box warning">
+        <span class="icon">⚠️</span>
+        <div>Make sure <code>torch.cuda.is_available()</code> returns <code>True</code>. If it returns <code>False</code>, your CUDA setup needs attention.</div>
+      </div>
+
+      <h3>Install Requirements &amp; Start</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 Terminal — Finish Install</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash"># Install all requirements
+pip install -r requirements.txt
+
+# Start ComfyUI
+python main.py --listen 0.0.0.0 --port 8188</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 2: FLUX MODELS -->
+    <section class="section" id="models">
+      <h2><span class="step-badge">2</span> Flux Model Placements</h2>
+      <p class="lead">Download the FLUX.1 components and place them in the correct ComfyUI directories.</p>
+
+      <div class="folder-tree">
+        <span class="line"><span class="folder">ComfyUI/</span></span>
+        <span class="line"><span class="comment">├── models/</span></span>
+        <span class="line"><span class="comment">│   ├── checkpoints/</span></span>
+        <span class="line"><span class="comment">│   │   └──</span> <span class="file">flux1-dev.safetensors</span></span>
+        <span class="line"><span class="comment">│   ├── clip/</span></span>
+        <span class="line"><span class="comment">│   │   ├──</span> <span class="file">t5xxl_fp8_e4m3fn.safetensors</span></span>
+        <span class="line"><span class="comment">│   │   └──</span> <span class="file">clip_l.safetensors</span></span>
+        <span class="line"><span class="comment">│   └── vae/</span></span>
+        <span class="line"><span class="comment">│       └──</span> <span class="file">ae.safetensors</span></span>
+      </div>
+
+      <h3>Download Links</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Location</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>flux1-dev.safetensors</code></td>
+              <td><code>models/checkpoints/</code></td>
+              <td><a class="url-link" href="https://huggingface.co/black-forest-labs/FLUX.1-dev/blob/main/flux1-dev.safetensors" target="_blank">black-forest-labs/FLUX.1-dev</a></td>
+            </tr>
+            <tr>
+              <td><code>t5xxl_fp8_e4m3fn.safetensors</code></td>
+              <td><code>models/clip/</code></td>
+              <td><a class="url-link" href="https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors" target="_blank">comfyanonymous/flux_text_encoders</a></td>
+            </tr>
+            <tr>
+              <td><code>clip_l.safetensors</code></td>
+              <td><code>models/clip/</code></td>
+              <td><a class="url-link" href="https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors" target="_blank">comfyanonymous/flux_text_encoders</a></td>
+            </tr>
+            <tr>
+              <td><code>ae.safetensors</code></td>
+              <td><code>models/vae/</code></td>
+              <td><a class="url-link" href="https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/ae.safetensors" target="_blank">black-forest-labs/FLUX.1-dev</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div>FLUX.1-dev is approximately 22 GB. Ensure you have enough disk space before downloading. The fp8 text encoder is recommended for lower VRAM usage.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: WORKFLOW -->
+    <section class="section" id="workflow">
+      <h2><span class="step-badge">3</span> Create ComfyUI Workflow</h2>
+      <p class="lead">Save this JSON workflow and drag-and-drop it directly into the ComfyUI browser interface.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 flux.json</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-json">{
+  "1": {
+    "inputs": {"ckpt_name": "flux1-dev.safetensors"},
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {"title": "Load Checkpoint"}
+  },
+  "2": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp8_e4m3fn.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {"title": "DualCLIPLoader"}
+  },
+  "3": {
+    "inputs": {"vae_name": "ae.safetensors"},
+    "class_type": "VAELoader",
+    "_meta": {"title": "Load VAE"}
+  },
+  "4": {
+    "inputs": {
+      "text": "a beautiful sunset over mountains, photorealistic, 8k",
+      "clip": ["2", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {"title": "CLIP Text Encode"}
+  },
+  "5": {
+    "inputs": {"width": 1024, "height": 1024, "batch_size": 1},
+    "class_type": "EmptyLatentImage",
+    "_meta": {"title": "Empty Latent Image"}
+  },
+  "6": {
+    "inputs": {"noise_seed": 42},
+    "class_type": "RandomNoise",
+    "_meta": {"title": "RandomNoise"}
+  },
+  "7": {
+    "inputs": {"conditioning": ["4", 0]},
+    "class_type": "FluxGuidance",
+    "_meta": {"title": "FluxGuidance"}
+  },
+  "8": {
+    "inputs": {"model": ["1", 0], "conditioning": ["7", 0]},
+    "class_type": "BasicGuider",
+    "_meta": {"title": "BasicGuider"}
+  },
+  "9": {
+    "inputs": {"sampler_name": "euler"},
+    "class_type": "KSamplerSelect",
+    "_meta": {"title": "KSamplerSelect"}
+  },
+  "10": {
+    "inputs": {"model": ["1", 0], "steps": 20, "denoise": 1.0, "scheduler": "simple"},
+    "class_type": "BasicScheduler",
+    "_meta": {"title": "BasicScheduler"}
+  },
+  "11": {
+    "inputs": {
+      "noise": ["6", 0],
+      "guider": ["8", 0],
+      "sampler": ["9", 0],
+      "sigmas": ["10", 0],
+      "latent_image": ["5", 0]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {"title": "SamplerCustomAdvanced"}
+  },
+  "12": {
+    "inputs": {"samples": ["11", 0], "vae": ["3", 0]},
+    "class_type": "VAEDecode",
+    "_meta": {"title": "VAE Decode"}
+  },
+  "13": {
+    "inputs": {"filename_prefix": "flux_test", "images": ["12", 0]},
+    "class_type": "SaveImage",
+    "_meta": {"title": "Save Image"}
+  }
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 4: FLASK PROXY -->
+    <section class="section" id="proxy">
+      <h2><span class="step-badge">4</span> Flask Proxy Application</h2>
+      <p class="lead">
+        A custom Flask app that translates Stable Diffusion WebUI (A1111) API calls from LibreChat
+        into ComfyUI-compatible workflow requests.
+      </p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 comfyui-proxy/app.py</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-python">import base64, json, requests, time, random
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+COMFYUI = 'http://host.docker.internal:8188'
+
+
+def build_workflow(prompt, width=1024, height=1024, steps=20):
+    """Build a ComfyUI workflow dict from a text prompt.
+
+    Args:
+        prompt: The text prompt for image generation.
+        width: Image width in pixels.
+        height: Image height in pixels.
+        steps: Number of sampling steps.
+
+    Returns:
+        Dictionary representing the ComfyUI workflow.
+    """
+    seed = random.randint(0, 2**32)
+    return {
+        '1': {'inputs': {'ckpt_name': 'flux1-dev.safetensors'}, 'class_type': 'CheckpointLoaderSimple', '_meta': {'title': 'Load Checkpoint'}},
+        '2': {'inputs': {'clip_name1': 'clip_l.safetensors', 'clip_name2': 't5xxl_fp8_e4m3fn.safetensors', 'type': 'flux', 'device': 'default'}, 'class_type': 'DualCLIPLoader', '_meta': {'title': 'DualCLIPLoader'}},
+        '3': {'inputs': {'vae_name': 'ae.safetensors'}, 'class_type': 'VAELoader', '_meta': {'title': 'Load VAE'}},
+        '4': {'inputs': {'text': prompt, 'clip': ['2', 0]}, 'class_type': 'CLIPTextEncode', '_meta': {'title': 'CLIP Text Encode'}},
+        '5': {'inputs': {'width': width, 'height': height, 'batch_size': 1}, 'class_type': 'EmptyLatentImage', '_meta': {'title': 'Empty Latent Image'}},
+        '6': {'inputs': {'noise_seed': seed}, 'class_type': 'RandomNoise', '_meta': {'title': 'RandomNoise'}},
+        '7': {'inputs': {'conditioning': ['4', 0]}, 'class_type': 'FluxGuidance', '_meta': {'title': 'FluxGuidance'}},
+        '8': {'inputs': {'model': ['1', 0], 'conditioning': ['7', 0]}, 'class_type': 'BasicGuider', '_meta': {'title': 'BasicGuider'}},
+        '9': {'inputs': {'sampler_name': 'euler'}, 'class_type': 'KSamplerSelect', '_meta': {'title': 'KSamplerSelect'}},
+        '10': {'inputs': {'model': ['1', 0], 'steps': steps, 'denoise': 1.0, 'scheduler': 'simple'}, 'class_type': 'BasicScheduler', '_meta': {'title': 'BasicScheduler'}},
+        '11': {'inputs': {'noise': ['6', 0], 'guider': ['8', 0], 'sampler': ['9', 0], 'sigmas': ['10', 0], 'latent_image': ['5', 0]}, 'class_type': 'SamplerCustomAdvanced', '_meta': {'title': 'SamplerCustomAdvanced'}},
+        '12': {'inputs': {'samples': ['11', 0], 'vae': ['3', 0]}, 'class_type': 'VAEDecode', '_meta': {'title': 'VAE Decode'}},
+        '13': {'inputs': {'filename_prefix': 'flux_test', 'images': ['12', 0]}, 'class_type': 'SaveImage', '_meta': {'title': 'Save Image'}}
+    }
+
+
+@app.route('/sdapi/v1/txt2img', methods=['POST'])
+def txt2img():
+    """Handle text-to-image generation requests from LibreChat."""
+    data = request.json
+    prompt = data.get('prompt', '')
+    width = data.get('width', 1024)
+    height = data.get('height', 1024)
+    steps = data.get('steps', 20)
+    workflow = build_workflow(prompt, width, height, steps)
+    r = requests.post(f'{COMFYUI}/prompt', json={'prompt': workflow})
+    prompt_id = r.json()['prompt_id']
+
+    for _ in range(120):
+        time.sleep(2)
+        hist = requests.get(f'{COMFYUI}/history/{prompt_id}').json()
+
+        if prompt_id in hist:
+            outputs = hist[prompt_id]['outputs']
+
+            for _, node_output in outputs.items():
+                if 'images' in node_output:
+                    img_info = node_output['images'][0]
+                    img_url = f"{COMFYUI}/view?filename={img_info['filename']}&subfolder={img_info['subfolder']}&type={img_info['type']}"
+                    img_bytes = requests.get(img_url).content
+                    b64 = base64.b64encode(img_bytes).decode()
+
+                    return jsonify({'images': [b64]})
+
+    return jsonify({'error': 'timeout'}), 500
+
+
+@app.route('/sdapi/v1/options', methods=['GET'])
+def options():
+    return jsonify({'sd_model_checkpoint': 'flux1-dev.safetensors'})
+
+
+@app.route('/sdapi/v1/sd-models', methods=['GET'])
+def models():
+    return jsonify([{'title': 'flux1-dev.safetensors', 'model_name': 'flux1-dev'}])
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=7860)</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 5: DOCKERFILE -->
+    <section class="section" id="dockerfile">
+      <h2><span class="step-badge">5</span> Dockerfile</h2>
+      <p class="lead">Containerize the Flask proxy so it runs alongside LibreChat.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 comfyui-proxy/Dockerfile</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">FROM python:3.11-slim
+WORKDIR /app
+RUN pip install flask requests
+COPY app.py .
+CMD ["python", "app.py"]</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 6: DOCKER COMPOSE -->
+    <section class="section" id="compose">
+      <h2><span class="step-badge">6</span> Docker Compose Override</h2>
+      <p class="lead">Add the proxy service to your existing LibreChat docker-compose configuration.</p>
+
+      <h3>Create Override File</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 docker-compose.override.yml</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">services:
+
+  # USE LIBRECHAT CONFIG FILE
+  api:
+    volumes:
+    - type: bind
+      source: ./librechat.yaml
+      target: /app/librechat.yaml
+
+  comfyui-proxy:
+    container_name: comfyui-proxy
+    build:
+      context: ./comfyui-proxy
+    ports:
+      - "7860:7860"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: always</code></pre>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div><code>extra_hosts</code> with <code>host.docker.internal:host-gateway</code> is critical — it allows the Docker container to reach ComfyUI running on the host machine at <code>localhost:8188</code>.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 7: ENV -->
+    <section class="section" id="env">
+      <h2><span class="step-badge">7</span> Environment Configuration</h2>
+      <p class="lead">Tell LibreChat where to find the Stable Diffusion API.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 LibreChat/.env</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">SD_WEBUI_URL=http://comfyui-proxy:7860
+SD_WEBUI_KEY=</code></pre>
+      </div>
+
+      <div class="info-box warning">
+        <span class="icon">⚠️</span>
+        <div>The URL uses <code>comfyui-proxy</code> (Docker internal name), not <code>localhost</code>. This is because LibreChat and the proxy are in the same Docker network.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: RESTART & TEST -->
+    <section class="section" id="restart">
+      <h2><span class="step-badge">8</span> Restart &amp; Test</h2>
+      <p class="lead">Rebuild Docker services and verify the proxy responds correctly.</p>
+
+      <h3>Restart LibreChat Stack</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 Terminal — Docker Restart</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">cd C:\Users\halil\Documents\LibreChat
+docker compose down
+docker compose up -d</code></pre>
+      </div>
+
+      <h3>Test the Proxy</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 Terminal — Health Check</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">curl http://localhost:7860/sdapi/v1/sd-models</code></pre>
+      </div>
+
+      <div class="terminal-output">
+        <span class="prompt">Expected output:</span><br>
+        <span class="result">[{"title": "flux1-dev.safetensors", "model_name": "flux1-dev"}]</span>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">✅</span>
+        <div>If you see the model name returned, the integration is working! LibreChat should now be able to generate images via the Proxy → ComfyUI → Flux pipeline.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 9: BATCH FILE -->
+    <section class="section" id="bat">
+      <h2><span class="step-badge">9</span> Batch Launcher</h2>
+      <p class="lead">Create a convenient <code>.bat</code> file to start ComfyUI with one click — with virtual environment activation included.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <div class="filename">📄 ComfyUI_Baslat.bat</div>
+          <button class="copy-btn" onclick="copyCode(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <pre><code class="language-bash">@echo off
+title ComfyUI - Flux
+cd /d "C:\Users\halil\Documents\AI\ComfyUI"
+call venv\Scripts\activate
+python main.py --listen 0.0.0.0 --port 8188
+pause</code></pre>
+      </div>
+
+      <div class="info-box tip">
+        <span class="icon">💡</span>
+        <div>Double-click this <code>.bat</code> file to launch ComfyUI. The window will stay open so you can monitor logs. Press any key when done to close.</div>
+      </div>
+    </section>
+
+    <!-- SECTION: CHECKLIST -->
+    <section class="section" id="checklist">
+      <h2><span class="step-badge">✓</span> Quick Checklist</h2>
+      <p class="lead">Verify each step before moving to the next.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;">#</th>
+              <th>Step</th>
+              <th>Verification</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>ComfyUI installed &amp; running</td>
+              <td>Open <code>http://localhost:8188</code> in browser</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>CUDA available</td>
+              <td><code>torch.cuda.is_available()</code> → <code>True</code></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Flux models in correct folders</td>
+              <td>ComfyUI UI shows model in dropdown</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Workflow generates image</td>
+              <td>Drag <code>flux.json</code> into ComfyUI UI → generate</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Flask proxy reachable</td>
+              <td><code>curl localhost:7860/sdapi/v1/sd-models</code> returns JSON</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>LibreChat can call proxy</td>
+              <td>Ask LibreChat to generate an image</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>Built for AI Image Generation &middot; ComfyUI + LibreChat + FLUX.1-dev Integration Guide</p>
+</footer>
+
+<script>
+// Prism.js doesn't highlight bash blocks by default, so register it properly
+if (!Prism.languages.bash) {
+  Prism.languages.bash = Prism.languages.shell;
+}
+
+// === COPY CODE ===
+function copyCode(btn) {
+  const codeBlock = btn.closest('.code-block');
+  const code = codeBlock.querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.classList.add('copied');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = originalHTML;
+    }, 2000);
+  });
+}
+
+// === SCROLL SPY ===
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.nav-link');
+
+const observerOptions = {
+  root: null,
+  rootMargin: '-20% 0px -60% 0px',
+  threshold: 0
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.getAttribute('id');
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+      });
+    }
+  });
+}, observerOptions);
+
+sections.forEach(section => observer.observe(section));
+
+// === MOBILE TOGGLE ===
+const mobileToggle = document.getElementById('mobileToggle');
+const sidebar = document.getElementById('sidebar');
+
+mobileToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('open');
+  mobileToggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰';
+});
+
+document.addEventListener('click', (e) => {
+  if (!sidebar.contains(e.target) && !mobileToggle.contains(e.target) && sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+    mobileToggle.textContent = '☰';
+  }
+});
+
+// Smooth scroll for nav links
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const targetId = link.getAttribute('href').substring(1);
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    // Close mobile sidebar
+    sidebar.classList.remove('open');
+    mobileToggle.textContent = '☰';
+  });
+});
+
+// Re-run Prism highlight for bash code blocks
+document.querySelectorAll('pre code.language-bash').forEach(block => {
+  Prism.highlightElement(block);
+});
+</script>
+
+</body>
+</html>
