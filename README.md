@@ -1,2 +1,103 @@
-# comfyui-librechat-docs
-Step-by-step guide: ComfyUI + FLUX.1 + LibreChat image generation integration
+# ComfyUI + LibreChat Integration Docs
+
+> Step-by-step interactive guide for setting up **ComfyUI** with the **FLUX.1-dev** model and integrating it with **LibreChat** via a Flask proxy for AI image generation.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
+[![CUDA](https://img.shields.io/badge/CUDA-12.x-green.svg)](https://developer.nvidia.com/cuda-toolkit)
+
+---
+
+## Overview
+
+This repository contains a complete, beautifully documented guide covering:
+
+| Step | Topic |
+|------|-------|
+| 1 | **System Architecture** — How LibreChat talks to ComfyUI |
+| 2 | **Install ComfyUI** — Git clone, venv, CUDA-enabled PyTorch |
+| 3 | **Flux Models** — Download & place FLUX.1-dev, CLIP, T5, VAE |
+| 4 | **JSON Workflow** — Ready-to-use ComfyUI workflow for image generation |
+| 5 | **Flask Proxy** — A1111 ↔ ComfyUI API bridge |
+| 6 | **Dockerfile** — Containerize the proxy |
+| 7 | **Docker Compose** — Add proxy to LibreChat stack |
+| 8 | **Environment** — `.env` configuration |
+| 9 | **Restart & Test** — Verify end-to-end |
+| 10 | **Batch Launcher** — One-click `.bat` starter |
+
+---
+
+## Architecture
+
+````
+┌─────────────────────────┐
+│   LibreChat (Docker)    │
+│   Web interface         │
+└────────────┬────────────┘
+             │  SD API call
+             ▼
+┌─────────────────────────┐
+│   Flask Proxy (:7860)   │
+│   Request translator    │
+└────────────┬────────────┘
+             │  ComfyUI API
+             ▼
+┌─────────────────────────┐
+│   ComfyUI (:8188)       │
+│   Workflow engine       │
+└────────────┬────────────┘
+             │  Inference
+             ▼
+┌─────────────────────────┐
+│   FLUX.1-dev GPU        │
+│   Image generation      │
+└─────────────────────────┘
+````
+---
+
+## Quick Start
+
+The full guide is available at the [**interactive documentation page**](https://halilsenaydin.github.io/comfyui-librechat-docs).
+
+Or simply open `index.html` in any browser — it works offline with no dependencies.
+
+### Requirements
+
+- Windows 10/11 (guide is Windows-focused, concepts apply everywhere)
+- Python 3.11
+- NVIDIA GPU with CUDA 12.x support (RTX 30xx / 40xx / 50xx recommended)
+- Docker Desktop
+
+---
+
+## Repo Structure
+````
+comfyui-librechat-docs/
+├── index.html          ← The interactive guide (open in browser)
+├── README.md           ← This file
+├── LICENSE             ← MIT License
+````
+---
+
+## Who Is This For?
+
+- ✅ AI enthusiasts wanting to add image generation to LibreChat
+- ✅ ComfyUI beginners who need a clear setup path
+- ✅ Anyone confused about A1111 ↔ ComfyUI API translation
+- ✅ Teams looking to integrate AI image gen into their chat apps
+
+---
+
+## Credit & License
+
+- **ComfyUI** by [comfyanonymous](https://github.com/comfyanonymous/ComfyUI)
+- **FLUX.1** by [Black Forest Labs](https://blackforestlabs.ai/)
+- **LibreChat** by [LibreChat-AI](https://github.com/danny-avila/LibreChat)
+
+Licensed under the [MIT License](LICENSE).
+
+---
+
+## If This Guide Helped You
+
+Give it a star ⭐ or fork & improve the documentation. Feedback is always welcome via Issues.
